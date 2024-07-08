@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the name of the virtual environment directory
-ENV_DIR="myenv"
+ENV_DIR="virtual_env"
 
 # Function to run the Python script in the virtual environment
 run_in_virtualenv() {

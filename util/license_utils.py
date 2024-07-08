@@ -1,6 +1,6 @@
-import time
 import random
 import string
+import util.time_utils as time_utils
 
 
 def delete_license(license_key, licenses_collection):
@@ -31,7 +31,7 @@ def input_license():
     :return: The target name, the current millis and the license key.
     """
     target = input("Enter target name: ")
-    millis = current_milli_time()
+    millis = time_utils.current_milli_time()
     license_key = generate_random_license()
 
     return target, millis, license_key
@@ -62,13 +62,6 @@ def find_license(license_key, licenses_collection):
     return licenses_collection.find(
         {"licenseKey": license_key}
     )
-
-
-def current_milli_time():
-    """
-    Get current system millis
-    """
-    return int(round(time.time() * 1000))
 
 
 def generate_random_license():

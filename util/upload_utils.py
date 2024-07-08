@@ -1,7 +1,7 @@
-import time
 import os
 
 import util.config_utils as config_utils
+import util.time_utils as time_utils
 
 
 def upload_file(file_path, upload_folder_path, files_collection, config):
@@ -27,10 +27,11 @@ def upload_file(file_path, upload_folder_path, files_collection, config):
     with open(file_path, 'r') as file:
         data = file.read()
 
+    parsed_path = relative_path.replace("\\", "/")
+
     files_collection.insert_one({
-        "millis": int(round(time.time() * 1000)),
-        "path": relative_path,
-        "locale": config['locale'].upper(),
+        "millis": time_utils.current_milli_time(),
+        "path": parsed_path,
         "content": data
     })
 

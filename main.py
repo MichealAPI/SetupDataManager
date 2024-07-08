@@ -29,6 +29,12 @@ def init_database():
     licenses_collection = db[base_config['licenses-collection']]
     files_collection = db[base_config['files-collection']]
 
+    try:
+        print(db.command("ping"))
+    except Exception as e:
+        print("\033[91m" + "Failed to connect to the database:", e)
+        return
+
     return files_collection, licenses_collection
 
 

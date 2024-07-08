@@ -12,8 +12,6 @@ else
     echo "Virtual environment '$ENV_DIR' created."
 fi
 
-python main.py
-
 # Activate the virtual environment
 if [ -f "$ENV_DIR/Scripts/activate" ]; then
     # Windows

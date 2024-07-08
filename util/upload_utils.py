@@ -20,6 +20,10 @@ def upload_file(file_path, upload_folder_path, files_collection, config):
     # Calculate the relative path of the file with respect to the upload folder
     relative_path = os.path.relpath(abs_file_path, start=abs_upload_folder_path)
 
+    if not relative_path.endswith(".yml") and not relative_path.endswith(".yaml"):
+        print(f"Skipping {file_path} as it is not a YAML file.")
+        return
+
     with open(file_path, 'r') as file:
         data = file.read()
 

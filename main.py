@@ -26,8 +26,8 @@ def init_database():
 
     client = MongoClient(base_config['mongo-uri'])
     db = client[base_config['database']]
-    licenses_collection = db['licenses-collection']
-    files_collection = db['files-collection']
+    licenses_collection = db[base_config['licenses-collection']]
+    files_collection = db[base_config['files-collection']]
 
     return files_collection, licenses_collection
 

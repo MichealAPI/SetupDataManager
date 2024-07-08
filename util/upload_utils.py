@@ -1,16 +1,16 @@
+import base64
 import os
 
 import util.config_utils as config_utils
 import util.time_utils as time_utils
 
 
-def upload_file(file_path, upload_folder_path, files_collection, config):
+def upload_file(file_path, upload_folder_path, files_collection):
     """
     Uploads a single file to the database.
     :param file_path:  The path of the file to upload.
     :param upload_folder_path:  The path of the upload folder.
     :param files_collection:  The collection to insert the file into.
-    :param config:  The configuration dictionary.
     :return:
     """
     # Convert file_path and upload_folder_path to absolute paths
@@ -22,9 +22,9 @@ def upload_file(file_path, upload_folder_path, files_collection, config):
 
     if not relative_path.endswith(".yml") and not relative_path.endswith(".yaml"):
         print(f"Skipping {file_path} as it is not a YAML file.")
-        return
+        return False
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         data = file.read()
 
     parsed_path = relative_path.replace("\\", "/")
@@ -32,8 +32,10 @@ def upload_file(file_path, upload_folder_path, files_collection, config):
     files_collection.insert_one({
         "millis": time_utils.current_milli_time(),
         "path": parsed_path,
-        "content": data
+        "content": base64.b64encode(bytes(data, 'utf-8')).decode('utf-8')
     })
+
+    return True
 
 
 def list_files_recursively_and_upload(folder_path, files_collection, config):
@@ -59,8 +61,8 @@ def list_files_recursively_and_upload(folder_path, files_collection, config):
         for file in files:
             try:
                 file_path = os.path.join(root, file)
-                upload_file(file_path, upload_folder_path, files_collection, config)
-                file_count += 1
+                if upload_file(file_path, upload_folder_path, files_collection):
+                    file_count += 1
             except Exception as e:
                 print(f"Failed to upload {file}: {e}")
     return file_count
@@ -72,7 +74,7 @@ def handle_files_upload(files_collection):
     :param files_collection:  The collection to insert the files into.
     :return:  None
     """
-    default_path = os.path.abspath('../data/')
+    default_path = os.path.abspath('data')
     folder_path_input = input("Enter the folder path or press Enter to use the default: ").strip()
     folder_path = os.path.abspath(folder_path_input) if folder_path_input else default_path
 

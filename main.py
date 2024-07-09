@@ -8,8 +8,6 @@ from util.config_utils import load_config
 
 def main():
 
-    print("\033[93mLoading... Please wait until the menu is displayed.")
-
     files_collection, licenses_collection = init_database()
 
     print("\033[92mLoaded successfully!\033[0m")
@@ -39,4 +37,5 @@ def init_database():
 
 
 if __name__ == '__main__':
+    print("\033[93mLoading... Please wait until the menu is displayed.")
     main()

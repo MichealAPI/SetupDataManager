@@ -5,37 +5,45 @@ import util.config_utils as config_utils
 import util.time_utils as time_utils
 
 
-def upload_file(file_path, upload_folder_path, files_collection):
+def insert_embedded_document(file_paths, upload_folder_path, config, files_collection):
     """
     Uploads a single file to the database.
-    :param file_path:  The path of the file to upload.
+    :param file_paths: The path of the file to upload.
+    :param config:  The configuration dictionary.
     :param upload_folder_path:  The path of the upload folder.
     :param files_collection:  The collection to insert the file into.
     :return:
     """
-    # Convert file_path and upload_folder_path to absolute paths
-    abs_file_path = os.path.abspath(file_path)
-    abs_upload_folder_path = os.path.abspath(upload_folder_path)
 
-    # Calculate the relative path of the file with respect to the upload folder
-    relative_path = os.path.relpath(abs_file_path, start=abs_upload_folder_path)
+    document_array = []
 
-    if not relative_path.endswith(".yml") and not relative_path.endswith(".yaml"):
-        print(f"Skipping {file_path} as it is not a YAML file.")
-        return False
+    for file_path in file_paths:
+        # Convert file_path and upload_folder_path to absolute paths
+        abs_file_path = os.path.abspath(file_path)
+        abs_upload_folder_path = os.path.abspath(upload_folder_path)
 
-    with open(file_path, 'r', encoding='utf-8') as file:
-        data = file.read()
+        # Calculate the relative path of the file with respect to the upload folder
+        relative_path = os.path.relpath(abs_file_path, start=abs_upload_folder_path)
 
-    parsed_path = relative_path.replace("\\", "/")
+        parsed_path = relative_path.replace("\\", "/")
+
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = file.read()
+
+        document_array.append({
+            "path": parsed_path,
+            "content": base64.b64encode(bytes(data, 'utf-8')).decode('utf-8')
+        })
+
+    locale = config['locale']
+    product = config['product']
 
     files_collection.insert_one({
+        "locale": locale,
+        "product": product,
         "millis": time_utils.current_milli_time(),
-        "path": parsed_path,
-        "content": base64.b64encode(bytes(data, 'utf-8')).decode('utf-8')
+        "files": document_array
     })
-
-    return True
 
 
 def list_files_recursively_and_upload(folder_path, files_collection, config):
@@ -46,6 +54,9 @@ def list_files_recursively_and_upload(folder_path, files_collection, config):
     :param config:  The configuration dictionary.
     :return:
     """
+
+    embedded_documents_array = []
+
     # Ensure folder_path is a string
     folder_path_str = str(folder_path)
     upload_folder = config.get('upload-folder', '')
@@ -59,12 +70,19 @@ def list_files_recursively_and_upload(folder_path, files_collection, config):
     file_count = 0
     for root, dirs, files in os.walk(upload_folder_path):
         for file in files:
-            try:
-                file_path = os.path.join(root, file)
-                if upload_file(file_path, upload_folder_path, files_collection):
-                    file_count += 1
-            except Exception as e:
-                print(f"Failed to upload {file}: {e}")
+            file_path = os.path.join(root, file)
+            if is_valid_file(file_path):
+                file_count += 1
+                embedded_documents_array.append(file_path)
+            else:
+                print(f"Skipping {file_path} as it is not a YAML file.")
+
+    insert_embedded_document(
+        embedded_documents_array,
+        upload_folder_path,
+        config,
+        files_collection
+    )
     return file_count
 
 
@@ -91,4 +109,10 @@ def handle_files_upload(files_collection):
         return
 
     uploaded_files_count = list_files_recursively_and_upload(folder_path, files_collection, config)
-    print(f"Uploaded {uploaded_files_count} files.")
+    print(f"Uploading {uploaded_files_count} files.")
+
+
+def is_valid_file(path):
+    valid_extensions = ['.yml', '.yaml']
+
+    return any(path.endswith(ext) for ext in valid_extensions)
